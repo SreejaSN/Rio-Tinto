@@ -1,0 +1,125 @@
+---
+title: "Research on Utah Nonprofit Organizations"
+author: "Sreeja Nair"
+date: "June 12, 2018"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(sorensonimpact)
+
+si_knitr_settings()
+
+si_ggplot_theme_update()
+```
+
+## Research on Nonprofits serving specific communities as outlined in the Kennecott Foundation Report.
+
+### Data source and methods
+
+Data was collected from GuideStar.org, which claims to be the world’s largest source of information on nonprofit organizations. Filters were applied to narrow down nonprofits by their location and National Taxonomy of Exempt Entities (NTEE) codes for efficacy. The National Taxonomy of Exempt Entities codes are a system used by the Internal Revenue Service to classify nonprofit organizations. The locations of the nonprofits were limited to Salt Lake County and Toole County.
+
+The biggest nonprofits were identified by examining their total assets. For each cause area, the top 50 nonprofits were determined and their data was collected and analyzed. 
+
+
+### Results
+
+Figure 1. depicts the top 10 nonprofits that are operational in Utah. 
+These nonprofits have been categorized into the various color codes  according to their NTEE codes, 
+IHC Health Services Inc. (classified as E21: Community Health System as per the NTEE system), topped the list with assets close to $10 billion but was removed from the list since its magnitude overwhelmed the display of the other nonprofits. 
+The other prominent NTEE categories that operate in Utah include E31: Group Health Practice, T22: private independent foundations, E12: fund raising and/or fund distribution, B11: single organization support, B43: University or technological , T30: public foundations, T21: Corporate foundations.
+
+
+![Figure 1.](/Users/sreej/Desktop/Sorenson/RioTinto/plots/topUT.png)
+
+Figure 2 depicts the top 5 nonprofits that operate in Salt Lake County and Tooele County.
+IHC Health Services Inc., which operates out of Salt Lake County, was removed from Figure 2 to improve the visibility of the other nonprofits in the figure. 
+
+![Figure 2.](/Users/sreej/Desktop/Sorenson/RioTinto/plots/TopSLCo.png)
+
+Figure 3 shows the top 5  nonprofits operating in Tooele County. 
+
+![Figure 3.](/Users/sreej/Desktop/Sorenson/RioTinto/plots/TopTooele.png)
+
+The nonprofits were further narrowed down by their specific cause areas and NTEE codes. These are described in the following sections. 
+
+
+
+#### Mental Health, Crisis Intervention
+
+As outlined in the Kennecott Foundation Community Needs report, mental health aspects (including opioid/addictive behaviors and depression) has been identified as one of the key areas the Foundation might consider addressing.
+
+The specific NTEE code break down of nonprofits that focus on mental health is shown in Figure 4.
+
+![Figure 4.](/Users/sreej/Desktop/Sorenson/RioTinto/plots/NTEEMhlth.png)
+
+Figure 5 highlights the main nonprofits in this field, with Valley Mental Health Inc. being the top player. The smaller nonprofits such as First Step House and Odyssey House Inc.- Utah emerge as bigger players when addiction is made the sole focus of program as shown in Figure 6.
+
+![Figure 5.](/Users/sreej/Desktop/Sorenson/RioTinto/plots/TopMhlth.png)
+
+![Figure 6.](/Users/sreej/Desktop/Sorenson/RioTinto/plots/TopAdd.png)
+
+#### Health
+##### Including General and Rehabilitative; Diseases, Disorders, Medical Disciplines; Medical Research
+
+![Figure 7.](/Users/sreej/Desktop/Sorenson/RioTinto/plots/NTEEHlth.png)
+
+![Figure 8.](/Users/sreej/Desktop/Sorenson/RioTinto/plots/TopHlth.png)
+
+
+
+#### Employment, Job Related
+
+The NTEE code breakdown for employment showed that Labor Unions dominated this field. Once these were filtered out, a meaningful breakdown of the various classifications could be visualized as shown in Figure 9.
+
+![Figure 9.](/Users/sreej/Desktop/Sorenson/RioTinto/plots/NTEEEmp.png)
+
+Figure 10 shows the top nonprofits that focus on employment. Most of these foundations focus on various kinds of employment training, employment procurement assistance and vocational rehabilitation with the exception of Utah Mining Association, whose primary focus is Fund Raising and/or Fund Distribution benefiting the mining industry.
+
+
+![Figure 10.](/Users/sreej/Desktop/Sorenson/RioTinto/plots/TopEmp.png)
+
+#### Housing, Shelter
+
+Nonprofits that work within the large cause area of housing/shelter  work towards addressing the various housing needs in Salt Lake County. This is depicted in Figure 11.
+
+
+![Figure 11.](/Users/sreej/Desktop/Sorenson/RioTinto/plots/NTEEHs.png)
+
+Figure 12 shows the top nonprofits in Salt Lake County that focus on housing and shelter. 
+
+![Figure 12.](/Users/sreej/Desktop/Sorenson/RioTinto/plots/TopHs.png)
+
+
+#### Education
+
+A breakdown of NTEE codes of the nonprofits that focus on education is shown in Figure 13. Various kinds of educational institutions/schools dominate this field which is also reflected in the top nonprofit organizations that work in this field (Figure 14.)
+
+
+
+![Figure 13.](/Users/sreej/Desktop/Sorenson/RioTinto/plots/NTEEEdu.png)
+
+
+![Figure 14.](/Users/sreej/Desktop/Sorenson/RioTinto/plots/TopEdu.png)
+
+
+#### Environmental Quality, Protection, and Beautification
+
+Figure 15 shows the various areas of focus of nonprofits that worked towards protecting the environment.
+
+![Figure 15.](/Users/sreej/Desktop/Sorenson/RioTinto/plots/NTEEEnv.png)
+
+ 
+The top non profits that focus on environment are shown in Figure 16. 
+
+![Figure 16.](/Users/sreej/Desktop/Sorenson/RioTinto/plots/TopEnv.png)
+
+
+### Limitations: 
+1. Nonprofits which did not supply their cause area data to GuideStar was not included in this study.
+2. Nonprofits which did not supply information regarding their NTEE codes could be segmented and analyzed. 
+3. Nonprofits located elsewhere but with operation in Salt Lake County of Tooele County could not be identified.
+4. There was insufficient data on nonprofits in Tooele county and therefore further segmentation was not possible.
+

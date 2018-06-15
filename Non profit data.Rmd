@@ -1,0 +1,1037 @@
+---
+title: "Guidestar data"
+author: "Sreeja Nair"
+date: "June 6, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(janitor)
+library(readr)
+library(scales)
+library(R.utils)
+library(tools)
+library(sorensonimpact)
+library(gridExtra)
+
+si_knitr_settings()
+
+si_ggplot_theme_update()
+
+#CD5C5C
+
+```
+
+
+##Guidestar data used here. Filters were applied and the top 50 orgs (by assets) were used for the analysis. 
+
+
+```{r Import data}
+
+gs_slc_edu <- read.csv("C:/Users/sreej/Desktop/Sorenson/RioTinto/GuideStar_downloads_20180606_2AEFC.csv") 
+
+gs_slc_env <- read.csv("C:/Users/sreej/Desktop/Sorenson/RioTinto/GuideStar_downloads_20180606_04BD6.csv")
+
+gs_slc_hlt <- read.csv("C:/Users/sreej/Desktop/Sorenson/RioTinto/GuideStar_downloads_all_hlth.csv")
+
+gs_slc_mht <- read.csv("C:/Users/sreej/Desktop/Sorenson/RioTinto/GuideStar_downloads_20180606_4A442.csv")
+
+# skipped the file with focus on disease, disorders etc. (Cause area G)and medical research (cause area H)
+
+gs_slc_emp <- read.csv("C:/Users/sreej/Desktop/Sorenson/RioTinto/GuideStar_downloads_nonlabouremp.csv")
+
+gs_slc_agr <- read.csv("C:/Users/sreej/Desktop/Sorenson/RioTinto/GuideStar_downloads_20180606_320D1.csv")
+
+gs_slc_hsr <- read.csv("C:/Users/sreej/Desktop/Sorenson/RioTinto/GuideStar_downloads_20180606_E4694.csv")
+
+gs_slc_com <- read.csv("C:/Users/sreej/Desktop/Sorenson/RioTinto/GuideStar_downloads_20180606_63AC5.csv")
+
+gs_too_all <- read.csv("C:/Users/sreej/Desktop/Sorenson/RioTinto/GuideStar_downloads_20180606_04922.csv")
+
+gs_slc_mhlt <- read.csv("C:/Users/sreej/Desktop/Sorenson/RioTinto/GuideStar_downloads_Other Mental Health.csv")
+
+gs_slc_add <- read.csv("C:/Users/sreej/Desktop/Sorenson/RioTinto/GuideStar_downloads_Addiction.csv")
+
+gs_slc_top <- read.csv("C:/Users/sreej/Desktop/Sorenson/RioTinto/GuideStar_downloads_top_SLCo.csv")
+
+gs_ut_top <- read.csv("C:/Users/sreej/Desktop/Sorenson/RioTinto/GuideStar_downloads_top_UT.csv")
+
+```
+
+
+```{r Top 10 Utah}
+
+top_ut <- gs_ut_top %>% 
+  select(Org.Name, EIN, NTEE.Code, Total.Assets) %>% 
+  clean_names()
+
+top_ut <- top_ut %>% 
+    mutate(total_assets = parse_number(total_assets)) 
+
+summary(top_ut$ntee_code)
+
+top_ut <- top_ut %>% 
+  filter(ntee_code != "")
+
+sum(is.na(top_ut$ntee_code))
+
+summary(top_ut$ntee_code)
+
+sorted_codes_top_ut <- top_ut %>% 
+  count(ntee_code, sort =T)  
+
+
+# p_top_ut <- sorted_codes_top_ut %>% 
+#   ggplot(aes(x = reorder(ntee_code,n), y = n))+
+#   geom_bar(stat = "identity", fill = "#CD5C5C")+
+#   scale_x_discrete("NTEE codes")+
+#   ggtitle("NTEE Codes")+
+#   theme_minimal()
+#   
+# p_top_ut+coord_flip()
+
+top_ut1 <- top_ut %>% 
+  separate(ntee_code, c("ntee", "description"), sep = "\\(") %>% 
+  separate(description, c("description", "remove"), sep = "\\)") %>% 
+  select(-remove)
+
+
+  
+str(top_ut1$ntee)
+
+top_ut1$ntee <- as.factor(top_ut1$ntee)
+
+
+top_ut1$org_name
+
+# top_ut1 %>% 
+#   arrange(desc(total_assets)) %>% 
+#   slice(1:5) %>% 
+#   ggplot(aes(x = reorder(org_name, -total_assets), y= total_assets))+
+#   geom_bar(stat = "identity", fill="#CD5C5C")+
+#   scale_y_continuous("Total assets", labels=comma)+
+#   scale_x_discrete("Organizations", labels=wrap_format(10))+
+#   ggtitle("Top 5 non profits in Utah")+
+#   theme_minimal()
+
+
+theme_set(theme_minimal())
+ 
+p1 <- top_ut1 %>% 
+  filter(org_name != "IHC HEALTH SERVICES INC") %>% 
+  arrange(desc(total_assets)) %>% 
+  slice(1:10) %>% 
+  ggplot(aes(x = reorder(org_name, total_assets), y= total_assets, fill = description))+
+    geom_bar(stat = "identity")+
+  scale_y_continuous("Total assets", labels=scale_si_unit())+
+  scale_x_discrete("Organizations", labels=wrap_format(20))+
+  ggtitle("Top 10 Nonprofits in Utah")+
+  scale_fill_discrete(name = "NTEE code description")+
+  theme(plot.title = element_text(size = 8),
+        axis.title = element_text(size = 6),
+        axis.text = element_text(size =6),
+        legend.text = element_text(size = 6),
+        legend.title = element_text(size = 6))
+  
+
+
+plot1 = p1 +coord_flip()
+plot1
+
+
+ggsave("TopUT.png", 
+       plot = plot1, 
+       device = "png", 
+       path = "C:/Users/sreej/Desktop/Sorenson/RioTinto/plots",
+       width = 6, height = 4, units = "in", dpi = 300)
+
+
+
+
+```
+
+
+```{r Top 10 SLCo}
+
+top_slc <- gs_slc_top %>% 
+  select(Org.Name, EIN, NTEE.Code, Total.Assets) %>% 
+  clean_names()
+
+top_slc <- top_slc %>% 
+    mutate(total_assets = parse_number(total_assets)) 
+
+summary(top_slc$ntee_code)
+
+top_slc <- top_slc %>% 
+  filter(ntee_code != "")
+
+sum(is.na(top_slc$ntee_code))
+
+summary(top_slc$ntee_code)
+
+# sorted_codes <- top_slc %>% 
+#   count(ntee_code, sort =T)  
+# 
+# 
+# p_top1 <- sorted_codes %>% 
+#   ggplot(aes(x = reorder(ntee_code,n), y = n))+
+#   geom_bar(stat = "identity", fill = "#CD5C5C")+
+#   scale_x_discrete("NTEE codes")+
+#   ggtitle("NTEE Codes")+
+#   theme_minimal()
+#   
+# p_top1+coord_flip()
+
+top1 <- top_slc %>% 
+  separate(ntee_code, c("ntee", "description"), sep = "\\(") %>% 
+  separate(description, c("description", "remove"), sep = "\\)") %>% 
+  select(-remove)
+  
+str(top1$ntee)
+
+top1$ntee <- as.factor(top1$ntee)
+
+str(top1$total_assets)
+
+
+plot2 <- top1 %>% 
+  filter(org_name != "IHC HEALTH SERVICES INC") %>% 
+  arrange(desc(total_assets)) %>% 
+  slice(1:5) %>% 
+  ggplot(aes(x = reorder(org_name, -total_assets), y= total_assets, fill = description))+
+  geom_bar(stat = "identity")+
+  scale_y_continuous("Total assets", labels=scale_si_unit())+
+  scale_x_discrete("Organizations", labels=wrap_format(10))+
+  ggtitle("Top 5 Nonprofits in Salt Lake County")+
+  theme_minimal()+
+  scale_fill_discrete(name = "NTEE code description")+
+  theme(plot.title = element_text(size = 8),
+       axis.title = element_text(size = 6),
+       axis.text = element_text(size =6),
+       legend.text = element_text(size = 6),
+       legend.title = element_text(size = 6))
+
+
+plot2
+
+ggsave("TopSLCo.png",
+        plot = plot2,
+        device = "png",
+        path = "C:/Users/sreej/Desktop/Sorenson/RioTinto/plots",
+        width = 6, height = 4, units = "in", dpi = 300)
+```
+
+
+```{r Tooele county }
+
+
+tooele_np <- gs_too_all %>% 
+  select(Org.Name, EIN, NTEE.Code, Total.Assets) %>% 
+  clean_names()
+
+names(tooele_np)
+
+sum(is.na(tooele_np))
+
+tooele_np <- tooele_np %>% 
+    mutate(total_assets = parse_number(total_assets)) %>% 
+  filter(ntee_code != "")
+
+str(tooele_np$ntee_code)
+
+#sorted_codes <- tooele_np %>% 
+  #count(ntee_code, sort =T)  
+
+
+# p_too_np <- sorted_codes %>% 
+#   ggplot(aes(x = reorder(ntee_code,n), y = n))+
+#   geom_bar(stat = "identity", fill = "#CD5C5C")+
+#   scale_x_discrete("NTEE codes")+
+#   ggtitle("NTEE Codes")+
+#   theme_minimal()
+#   
+# p_too_np+coord_flip()
+
+too_np <- tooele_np %>% 
+  separate(ntee_code, c("ntee", "description"), sep = "\\(") %>% 
+   separate(description, c("description", "remove"), sep = "\\)") %>% 
+  select(-remove)
+  
+too_np$ntee <- as.factor(too_np$ntee)
+
+plot3 <- too_np %>% 
+  arrange(desc(total_assets)) %>% 
+  slice(1:5) %>% 
+  ggplot(aes(x = reorder(org_name, -total_assets), y= total_assets, fill = description))+
+  geom_bar(stat = "identity")+
+  scale_y_continuous("Total assets", labels=scale_si_unit())+
+  scale_x_discrete("Organizations", labels=wrap_format(10))+
+  ggtitle("Top 5 Nonprofits in Toole County")+
+  theme_minimal()+
+  scale_fill_discrete(name = "NTEE code description")+
+  theme(plot.title = element_text(size = 8),
+       axis.title = element_text(size = 6),
+       axis.text = element_text(size =6),
+       legend.text = element_text(size = 6),
+       legend.title = element_text(size = 6))
+  
+plot3
+
+ggsave("TopTooele.png",
+        plot = plot3,
+        device = "png",
+        path = "C:/Users/sreej/Desktop/Sorenson/RioTinto/plots",
+        width = 6, height = 4, units = "in", dpi = 300)
+
+
+
+# Loads of codes missing and assets missing
+
+```
+
+
+```{r Mental Health all}
+
+
+mht_slc <- gs_slc_mht %>% 
+  select(Org.Name, EIN, NTEE.Code, Total.Assets) %>% 
+  clean_names()
+
+names(mht_slc)
+
+
+mht_slc <- mht_slc %>% 
+    mutate(total_assets = parse_number(total_assets)) 
+
+str(mht_slc$ntee_code)
+
+summary(mht_slc$ntee_code)
+
+sorted_codes_mht <- mht_slc %>% 
+  count(ntee_code, sort =T)  
+
+
+p_mht1 <- sorted_codes_mht %>% 
+  ggplot(aes(x = reorder(ntee_code,n), y = n))+
+  geom_bar(stat = "identity", fill = "#107D7F")+
+  scale_x_discrete("NTEE codes", labels = wrap_format(45))+
+  ggtitle("Top NTEE Code distribution among nonprofits\nwith a focus on mental health")+
+  theme(axis.title = element_blank(), 
+          plot.title = element_text(hjust = 0.5, size = 8),
+           axis.text = element_text(size =6))
+  
+plot4 <- p_mht1+coord_flip()
+plot4
+
+ggsave("NTEEMhlth.png",
+        plot = plot4,
+        device = "png",
+        path = "C:/Users/sreej/Desktop/Sorenson/RioTinto/plots",
+        width = 6, height = 4, units = "in", dpi = 300) 
+
+
+mht1 <- mht_slc %>% 
+  separate(ntee_code, c("ntee", "description"), sep = "\\(")
+  
+#str(mht1$ntee)
+
+#sorensonimpact::si_design
+
+#mht1$ntee <- as.factor(mht1$ntee)
+
+ 
+plot5 <- mht1 %>% 
+  mutate(org_name = tolower(org_name)) %>% 
+  mutate(org_name = toTitleCase(org_name)) %>% 
+  arrange(desc(total_assets)) %>% 
+  slice(1:10) %>% 
+  ggplot(aes(x = reorder(org_name, -total_assets), y= total_assets))+
+  geom_bar(stat = "identity", fill="#1D4F53")+
+  scale_y_continuous("Total assets", labels =scale_si_unit())+
+  scale_x_discrete("Organizations", labels=wrap_format(10))+
+  ggtitle("Top 10 nonprofits with a focus on mental health and addiction")+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 8),
+       axis.title = element_text(size = 6),
+       axis.text = element_text(size =6))
+      
+
+plot5
+
+ggsave("TopMhlth.png",
+        plot = plot5,
+        device = "png",
+        path = "C:/Users/sreej/Desktop/Sorenson/RioTinto/plots",
+        width = 6, height = 4, units = "in", dpi = 300)
+
+
+```
+
+
+```{r Addiction}
+
+add_slc <- gs_slc_add %>% 
+  select(Org.Name, EIN, NTEE.Code, Total.Assets) %>% 
+  clean_names()
+
+add_slc <- add_slc %>% 
+    mutate(total_assets = parse_number(total_assets)) 
+
+#str(add_slc$ntee_code)
+
+#summary(add_slc$ntee_code)
+
+# sorted_codes <- add_slc %>% 
+#   count(ntee_code, sort =T)  
+# 
+# 
+# p_add1 <- sorted_codes %>% 
+#   ggplot(aes(x = reorder(ntee_code,n), y = n))+
+#   geom_bar(stat = "identity", fill = "#CD5C5C")+
+#   scale_x_discrete("NTEE codes")+
+#   ggtitle("NTEE Codes")+
+#   theme_minimal()
+#   
+# p_add1+coord_flip()
+
+add1 <- add_slc %>% 
+  separate(ntee_code, c("ntee", "description"), sep = "\\(")
+  
+#str(add1$ntee)
+
+#add1$ntee <- as.factor(add1$ntee)
+ 
+# add1 %>% 
+#   arrange(desc(total_assets)) %>% 
+#   slice(1:10) %>% 
+#   ggplot(aes(x = reorder(org_name, -total_assets), y= total_assets))+
+#   geom_bar(stat = "identity", fill="#CD5C5C")+
+#   scale_y_continuous("Total assets", labels=comma)+
+#   scale_x_discrete("Organizations", labels=wrap_format(10))+
+#   ggtitle("Top 10 biggest non-profits with a focus on addironment")+
+#   theme_minimal()
+
+
+plot6 <- add1 %>% 
+  mutate(org_name = tolower(org_name)) %>% 
+  mutate(org_name = toTitleCase(org_name)) %>% 
+  arrange(desc(total_assets)) %>% 
+  slice(1:5) %>% 
+  ggplot(aes(x = reorder(org_name, -total_assets), y= total_assets))+
+  geom_bar(stat = "identity", fill="#1D4f53")+
+  scale_y_continuous("Total assets", labels=scale_si_unit())+
+  scale_x_discrete("Organizations", labels=wrap_format(10))+
+  ggtitle("Top 5 nonprofits with a focus on addiction")+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 8),
+       axis.title = element_text(size = 6),
+       axis.text = element_text(size =6))
+
+plot6
+
+ggsave("TopAdd.png", 
+       plot = plot6, 
+       device = "png", 
+       path = "C:/Users/sreej/Desktop/Sorenson/RioTinto/plots",
+       width = 6, height = 4, units = "in", dpi = 300)
+
+
+
+
+```
+
+
+```{r Employment}
+
+emp_slc <- gs_slc_emp %>% 
+  select(Org.Name, EIN, NTEE.Code, Total.Assets) %>% 
+  clean_names()
+
+#names(emp_slc)
+
+
+emp_slc <- emp_slc %>% 
+    mutate(total_assets = parse_number(total_assets)) 
+
+#str(emp_slc$ntee_code)
+
+#summary(emp_slc$ntee_code)
+
+sorted_codes_emp <- emp_slc %>% 
+  count(ntee_code, sort =T)  
+
+p_emp1 <- sorted_codes_emp %>% 
+  ggplot(aes(x = reorder(ntee_code,n), y = n))+
+  geom_bar(stat = "identity", fill = "#107D7F")+
+  scale_x_discrete("NTEE codes", labels = wrap_format(45))+
+  ggtitle("NTEE code distribution among nonprofits\nwith a focus on employment")+
+  theme(axis.title = element_blank(), 
+          plot.title = element_text(hjust = 0.5, size = 8),
+           axis.text = element_text(size =6))
+  
+plot7 <- p_emp1+coord_flip() 
+
+ggsave("NTEEEmp.png",
+        plot = plot7,
+        device = "png",
+        path = "C:/Users/sreej/Desktop/Sorenson/RioTinto/plots",
+        width = 6, height = 4, units = "in", dpi = 300)
+
+emp1 <- emp_slc %>% 
+  separate(ntee_code, c("ntee", "description"), sep = "\\(")
+  
+#str(emp1$ntee)
+
+emp1$ntee <- as.factor(emp1$ntee)
+
+plot8 <- emp1 %>% 
+  arrange(desc(total_assets)) %>% 
+  slice(1:10) %>% 
+  ggplot(aes(x = reorder(org_name, -total_assets), y= total_assets))+
+  geom_bar(stat = "identity", fill="#1d4f53")+
+  scale_y_continuous("Total assets", labels=scale_si_unit())+
+  scale_x_discrete("Organizations", labels=wrap_format(10))+
+  ggtitle("Top 10 biggest nonprofits with a focus on employment")+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 8),
+       axis.title = element_text(size = 7),
+       axis.text = element_text(size =6))
+    
+
+
+plot8
+
+ggsave("TopEmp.png",
+        plot = plot8,
+        device = "png",
+        path = "C:/Users/sreej/Desktop/Sorenson/RioTinto/plots",
+        width = 6, height = 4, units = "in", dpi = 300)
+
+
+
+
+```
+
+```{r Human services}
+
+hsr_slc <- gs_slc_hsr %>% 
+  select(Org.Name, EIN, NTEE.Code, Total.Assets) %>% 
+  clean_names()
+
+#names(hsr_slc)
+
+
+hsr_slc <- hsr_slc %>% 
+    mutate(total_assets = parse_number(total_assets)) 
+
+#str(hsr_slc$ntee_code)
+
+#summary(hsr_slc$ntee_code)
+
+sorted_codes_hsr <- hsr_slc %>% 
+  count(ntee_code, sort =T)  
+
+
+p_hsr1 <- sorted_codes_hsr %>% 
+  ggplot(aes(x = reorder(ntee_code,n), y = n))+
+  geom_bar(stat = "identity", fill = "#107D7F")+
+  scale_x_discrete(labels = wrap_format(45))+
+  ggtitle("NTEE code distribution among nonprofits\nwith a focus on human services")+
+  theme(axis.title = element_blank(),
+        plot.title = element_text(hjust = 0.5, size = 8),
+        axis.text = element_text(size =6))
+  
+plot9 <- p_hsr1+coord_flip() 
+
+ggsave("NTEEHs.png",
+        plot = plot9,
+        device = "png",
+        path = "C:/Users/sreej/Desktop/Sorenson/RioTinto/plots",
+        width = 6, height = 4, units = "in", dpi = 300)
+
+
+hsr1 <- hsr_slc %>% 
+  separate(ntee_code, c("ntee", "description"), sep = "\\(")
+  
+str(hsr1$ntee)
+
+hsr1$ntee <- as.factor(hsr1$ntee)
+
+plot10 <- hsr1 %>% 
+  arrange(desc(total_assets)) %>% 
+  slice(1:10) %>% 
+  ggplot(aes(x = reorder(org_name, -total_assets), y= total_assets))+
+  geom_bar(stat = "identity", fill="#1d4f53")+
+  scale_y_continuous("Total assets", labels=scale_si_unit())+
+  scale_x_discrete("Organizations", labels=wrap_format(10))+
+  ggtitle("Top 10 nonprofits with a focus on human services")+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 8),
+        axis.title = element_text(size = 6),
+        axis.text = element_text(size = 6))
+
+plot10
+
+ggsave("TopHs.png",
+        plot = plot10,
+        device = "png",
+        path = "C:/Users/sreej/Desktop/Sorenson/RioTinto/plots",
+        width = 6, height = 4, units = "in", dpi = 300)
+
+```
+
+
+```{r Education }
+
+edu_slc <- gs_slc_edu %>% 
+  select(Org.Name, EIN, NTEE.Code, Total.Assets) %>% 
+  clean_names()
+
+#names(edu_slc)
+
+
+edu_slc <- edu_slc %>% 
+    mutate(total_assets = parse_number(total_assets)) 
+
+#str(edu_slc$ntee_code)
+
+
+#summary(edu_slc$ntee_code)
+
+
+sorted_codes_edu <- edu_slc %>% 
+  count(ntee_code, sort =T)  
+
+p_edu1 <- sorted_codes_edu %>% 
+  ggplot(aes(x = reorder(ntee_code,n), y = n))+
+  geom_bar(stat = "identity", fill = "#107D7F")+
+  scale_x_discrete(labels = wrap_format(45))+
+  ggtitle("NTEE code distribution among nonprofits\nwith a focus on education")+
+  theme(axis.title = element_blank(),
+        plot.title = element_text(hjust = 0.5, size = 8),
+        axis.text = element_text(size =6))
+  
+  
+plot11 <- p_edu1+coord_flip()
+
+ggsave("NTEEEdu.png",
+        plot = plot11,
+        device = "png",
+        path = "C:/Users/sreej/Desktop/Sorenson/RioTinto/plots",
+        width = 6, height = 4, units = "in", dpi = 300)
+
+edu1 <- edu_slc %>% 
+  separate(ntee_code, c("ntee", "description"), sep = "\\(")
+
+str(edu1$ntee)
+
+
+
+# edu2 <- edu1 %>% 
+#   filter(ntee != "B20 ") %>% 
+#   filter(ntee != "B21 ") %>% 
+#   filter(ntee != "B24 ") %>% 
+#   filter(ntee != "B25 ") %>% 
+#   filter(ntee != "B29 ")
+
+
+edu1$ntee <- as.factor(edu1$ntee)
+ 
+plot12 <- edu1 %>% 
+  arrange(desc(total_assets)) %>% 
+  slice(1:10) %>% 
+  ggplot(aes(x = reorder(org_name, -total_assets), y= total_assets))+
+  geom_bar(stat = "identity", fill="#1d4f53")+
+  scale_y_continuous("Total assets", labels=scale_si_unit())+
+  scale_x_discrete("Organizations", labels=wrap_format(10))+
+  ggtitle("Top 10 biggest nonprofits with a focus on education")+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 8),
+        axis.title = element_text(size = 6),
+        axis.text = element_text(size = 6))
+
+plot12
+
+ggsave("TopEdu.png",
+        plot = plot12,
+        device = "png",
+        path = "C:/Users/sreej/Desktop/Sorenson/RioTinto/plots",
+        width = 6, height = 4, units = "in", dpi = 300)
+
+# edu2 %>% 
+#   arrange(desc(total_assets)) %>% 
+#   slice(1:10) %>% 
+#   ggplot(aes(x = reorder(org_name, -total_assets), y= total_assets))+
+#   geom_bar(stat = "identity", fill="#CD5C5C")+
+#   scale_y_continuous("Total assets", labels=comma)+
+#   scale_x_discrete("Organizations", labels=wrap_format(10))+
+#   ggtitle("Top 10 biggest non school non-profits with a focus on education")+
+#   theme_minimal()
+
+
+  
+
+```
+
+
+
+
+
+```{r Environment}
+
+
+env_slc <- gs_slc_env %>% 
+  select(Org.Name, EIN, NTEE.Code, Total.Assets) %>% 
+  clean_names()
+
+#names(env_slc)
+
+
+env_slc <- env_slc %>% 
+    mutate(total_assets = parse_number(total_assets)) 
+
+#str(env_slc$ntee_code)
+
+#summary(env_slc$ntee_code)
+
+sorted_codes_env <- env_slc %>% 
+  count(ntee_code, sort =T)  
+
+  
+p_env1 <- sorted_codes_env %>% 
+  ggplot(aes(x = reorder(ntee_code,n), y = n))+
+  geom_bar(stat = "identity", fill = "#107D7F")+
+    scale_x_discrete(labels = wrap_format(45))+
+  ggtitle("NTEE code distribution among Nonprofits\nwith a focus on environment")+
+  theme(axis.title = element_blank(),
+        plot.title = element_text(hjust = 0.5, size = 8),
+        axis.text = element_text(size =6))
+
+
+plot13 <- p_env1+coord_flip()
+
+ggsave("NTEEEnv.png",
+        plot = plot13,
+        device = "png",
+        path = "C:/Users/sreej/Desktop/Sorenson/RioTinto/plots",
+        width = 6, height = 4, units = "in", dpi = 300)
+
+env1 <- env_slc %>% 
+  separate(ntee_code, c("ntee", "description"), sep = "\\(")
+  
+str(env1$ntee)
+
+env1$ntee <- as.factor(env1$ntee)
+ 
+plot14 <- env1 %>% 
+  mutate(org_name = tolower(org_name)) %>% 
+  mutate(org_name = toTitleCase(org_name)) %>% 
+  arrange(desc(total_assets)) %>% 
+  slice(1:10) %>% 
+  ggplot(aes(x = reorder(org_name, -total_assets), y= total_assets))+
+  geom_bar(stat = "identity", fill="#1d4f53")+
+  scale_y_continuous("Total assets", labels=scale_si_unit())+
+  scale_x_discrete("Organizations", labels=wrap_format(10))+
+  ggtitle("Top 10 biggest non-profits with a focus on environment")+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 8),
+        axis.title = element_text(size = 6),
+        axis.text = element_text(size = 6))
+
+plot14
+
+ggsave("TopEnv.png",
+        plot = plot14,
+        device = "png",
+        path = "C:/Users/sreej/Desktop/Sorenson/RioTinto/plots",
+        width = 6, height = 4, units = "in", dpi = 300)
+
+
+
+```
+
+
+
+```{r Health}
+
+hlt_slc <- gs_slc_hlt %>% 
+  select(Org.Name, EIN, NTEE.Code, Total.Assets) %>% 
+  clean_names()
+
+names(hlt_slc)
+
+
+hlt_slc <- hlt_slc %>% 
+    mutate(total_assets = parse_number(total_assets)) 
+
+str(hlt_slc$ntee_code)
+
+summary(hlt_slc$ntee_code)
+
+sorted_codes_hlt <- hlt_slc %>% 
+  count(ntee_code, sort =T)  
+
+
+
+p_hlt1 <- sorted_codes_hlt %>% 
+  ggplot(aes(x = reorder(ntee_code,n), y = n))+
+  geom_bar(stat = "identity", fill = "#107D7F")+
+  scale_x_discrete(labels = wrap_format(45))+
+  ggtitle("NTEE Code distribution among nonprofits\nwith a focus on health")+
+  theme_minimal()+
+  theme(axis.title = element_blank(),
+        plot.title = element_text(hjust = 0.5, size = 8),
+        axis.text = element_text(size =6))
+  
+plot15 <- p_hlt1+coord_flip()
+plot15
+
+ggsave("NTEEHlth.png",
+        plot = plot15,
+        device = "png",
+        path = "C:/Users/sreej/Desktop/Sorenson/RioTinto/plots",
+        width = 6, height = 4, units = "in", dpi = 300)
+
+hlt1 <- hlt_slc %>% 
+  separate(ntee_code, c("ntee", "description"), sep = "\\(")
+  
+str(hlt1$ntee)
+
+hlt1$ntee <- as.factor(hlt1$ntee)
+ 
+plot16 <- hlt1 %>% 
+  filter(org_name != "IHC HEALTH SERVICES INC") %>% 
+  mutate(org_name = tolower(org_name)) %>% 
+  mutate(org_name = toTitleCase(org_name)) %>% 
+  arrange(desc(total_assets)) %>% 
+  slice(1:10) %>% 
+  ggplot(aes(x = reorder(org_name, -total_assets), y= total_assets))+
+  geom_bar(stat = "identity", fill="#1d4f53")+
+  scale_y_continuous("Total assets", labels=scale_si_unit())+
+  scale_x_discrete("Organizations", labels=wrap_format(10))+
+  ggtitle("Top 10 nonprofits with a focus on health")+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 8),
+        axis.title = element_text(size = 6),
+        axis.text = element_text(size = 6))
+
+plot16
+
+ggsave("TopHlth.png",
+        plot = plot16,
+        device = "png",
+        path = "C:/Users/sreej/Desktop/Sorenson/RioTinto/plots",
+        width = 6, height = 4, units = "in", dpi = 300)
+
+#clean up: collate all IHC
+
+
+```
+
+
+
+
+
+
+
+
+
+
+```{#r Agriculture: don't need}
+
+agr_slc <- gs_slc_agr %>% 
+  select(Org.Name, EIN, NTEE.Code, Total.Assets) %>% 
+  clean_names()
+
+names(agr_slc)
+
+
+agr_slc <- agr_slc %>% 
+    mutate(total_assets = parse_number(total_assets)) 
+
+str(agr_slc$ntee_code)
+
+summary(agr_slc$ntee_code)
+
+sorted_codes <- agr_slc %>% 
+  count(ntee_code, sort =T)  
+
+
+p_agr1 <- sorted_codes %>% 
+  ggplot(aes(x = reorder(ntee_code,n), y = n))+
+  geom_bar(stat = "identity", fill = "#CD5C5C")+
+  scale_x_discrete("NTEE codes")+
+  ggtitle("NTEE Codes")+
+  theme_minimal()
+  
+p_agr1+coord_flip() 
+
+agr1 <- agr_slc %>% 
+  separate(ntee_code, c("ntee", "description"), sep = "\\(")
+  
+str(agr1$ntee)
+
+agr1$ntee <- as.factor(agr1$ntee)
+
+agr1 %>% 
+  arrange(desc(total_assets)) %>% 
+  slice(1:10) %>% 
+  ggplot(aes(x = reorder(org_name, -total_assets), y= total_assets))+
+  geom_bar(stat = "identity", fill="#CD5C5C")+
+  scale_y_continuous("Total assets", labels=comma)+
+  scale_x_discrete("Organizations", labels=wrap_format(10))+
+  ggtitle("Top 10 biggest non-profits with a focus on agriculture")+
+  theme_minimal()
+
+
+
+```
+
+
+
+
+
+
+
+
+```{#r Community improvement}
+
+com_slc <- gs_slc_com %>% 
+  select(Org.Name, EIN, NTEE.Code, Total.Assets) %>% 
+  clean_names()
+
+
+com_slc <- com_slc %>% 
+    mutate(total_assets = parse_number(total_assets)) 
+
+str(com_slc$ntee_code)
+
+summary(com_slc$ntee_code)
+
+sorted_codes_com <- com_slc %>% 
+  count(ntee_code, sort =T)  
+
+
+p_com1 <- sorted_codes_com %>% 
+  ggplot(aes(x = reorder(ntee_code,n), y = n))+
+  geom_bar(stat = "identity", fill = "#CD5C5C")+
+  scale_x_discrete("NTEE codes")+
+  ggtitle("NTEE Codes")+
+  theme_minimal()
+  
+p_com1+coord_flip() 
+
+com1 <- com_slc %>% 
+  separate(ntee_code, c("ntee", "description"), sep = "\\(")
+  
+str(com1$ntee)
+
+com1$ntee <- as.factor(com1$ntee)
+
+com1 %>% 
+  arrange(desc(total_assets)) %>% 
+  slice(1:10) %>% 
+  ggplot(aes(x = reorder(org_name, -total_assets), y= total_assets))+
+  geom_bar(stat = "identity", fill="#CD5C5C")+
+  scale_y_continuous("Total assets", labels=comma)+
+  scale_x_discrete("Organizations", labels=wrap_format(10))+
+  ggtitle("Top 10 biggest non-profits with a focus on community improvement")+
+  theme_minimal()
+
+
+```
+
+
+
+
+
+
+
+```{#r Mental health}
+
+
+mhlt_slc <- gs_slc_mhlt %>% 
+  select(Org.Name, EIN, NTEE.Code, Total.Assets) %>% 
+  clean_names()
+
+names(mhlt_slc)
+
+
+mhlt_slc <- mhlt_slc %>% 
+    mutate(total_assets = parse_number(total_assets)) 
+
+str(mhlt_slc$ntee_code)
+
+summary(mhlt_slc$ntee_code)
+
+sorted_codes <- mhlt_slc %>% 
+  count(ntee_code, sort =T)  
+
+
+p_mhlt1 <- sorted_codes %>% 
+  ggplot(aes(x = reorder(ntee_code,n), y = n))+
+  geom_bar(stat = "identity", fill = "#CD5C5C")+
+  scale_x_discrete("NTEE codes")+
+  ggtitle("NTEE Codes")+
+  theme_minimal()
+  
+p_mhlt1+coord_flip()
+
+mhlt1 <- mhlt_slc %>% 
+  separate(ntee_code, c("ntee", "description"), sep = "\\(")
+  
+str(mhlt1$ntee)
+
+mhlt1$ntee <- as.factor(mhlt1$ntee)
+ 
+mhlt1 %>% 
+  arrange(desc(total_assets)) %>% 
+  slice(1:10) %>% 
+  ggplot(aes(x = reorder(org_name, -total_assets), y= total_assets))+
+  geom_bar(stat = "identity", fill="#CD5C5C")+
+  scale_y_continuous("Total assets", labels=comma)+
+  scale_x_discrete("Organizations", labels=wrap_format(10))+
+  ggtitle("Top 10 biggest non-profits with a focus on mhltironment")+
+  theme_minimal()
+
+
+p4 <- mhlt1 %>% 
+  mutate(org_name = tolower(org_name)) %>% 
+  mutate(org_name = toTitleCase(org_name)) %>% 
+  arrange(desc(total_assets)) %>% 
+  slice(1:3) %>% 
+  ggplot(aes(x = reorder(org_name, -total_assets), y= total_assets))+
+  geom_bar(stat = "identity", fill="#CD5C5C")+
+  scale_y_continuous("Total assets", labels=comma)+
+  scale_x_discrete("Organizations", labels=wrap_format(10))+
+  ggtitle("Top 3 non-profits with a focus on Mental Health in SLCo")+
+  theme_minimal()
+
+
+p4
+
+ggsave("MentalHealth.png", plot = p4, device = "png", path = "C:/Users/sreej/Desktop/Sorenson/RioTinto/plots", 
+       width = 6, height = 4, dpi = 300, units="in")
+
+
+```
+
+
+```{r}
+sorensonimpact::si_knitr_settings()
+
+```
+
+
+
+
+
+
+
+
+
+
+
